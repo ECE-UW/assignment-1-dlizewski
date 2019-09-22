@@ -26,9 +26,10 @@ class vertex:
         return False
 
 class edge:
-    def __init__(self, v1, v2):
+    def __init__(self, v1, v2, streetName):
         self.v1 = v1
         self.v2 = v2
+        self.streetName = streetName
 
 class street:
     def __init__(self, name):
@@ -53,7 +54,7 @@ class street:
         # Add the edge
         numVertex = len(self.vertexList)
         if numVertex > 1:
-            self.edgeList.append(edge(numVertex-2, numVertex-1))
+            self.edgeList.append(edge(numVertex-2, numVertex-1, self.name))
 
 
 
@@ -63,69 +64,6 @@ class graph:
         self.edgeList = []
 
     def checkIntersect(self, p1, p2, q1, q2):
-        #todo input error check
-
-        debugPrint("Check intersect")
-        debugPrint("Line1: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(p1.x, p1.y, p2.x, p2.y))
-        debugPrint("Line2: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(q1.x, q1.y, q2.x, q2.y))
-
-
-        # Create a representation of the line
-        # p_a*x + p_b*y = p_c
-        p_a = p2.y - p1.y
-        p_b = p1.x - p2.x
-        p_c = p_a * (p1.x) + p_b * (p1.y)
-
-        # qp_a*x + q_b*y = q_c
-        q_a = q2.y - q1.y
-        q_b = q1.x - q2.x
-        q_c = q_a * (q1.x) + q_b * (q1.y)
-
-
-        # Check if lines are parallel
-        # If the determinate on the 2x2 matrix is 0, they are parallel
-        det = p_a * q_b - q_a * p_b
-
-        # parallel line
-        if det == 0:
-            debugPrint("Parallel")
-            # check if they are the same line
-            temp = p_a * (q1.x) + p_b * (q1.y)
-            if abs(temp < 0.0001):
-                # Same line
-                # Check if they have overlap
-                if q1.x < max(p1.x, p2.x) and q1 > min(p1.x, p2.x):
-                    return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
-                elif q2.x < max(p1.x, p2.x) and q2 > min(p1.x, p2.x):
-                    return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
-                # Did not overlap
-            return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
-
-        # Invert and multiply 2x2 the matrix
-        # intersect point(x,y)
-        x = ((q_b * p_c) - (p_b * q_c)) / det
-        y = ((p_a * q_c) - (q_a * p_c)) / det
-
-        debugPrint("Potential Intersection ({:.2f},{:.2f})".format(x,y))
-
-        p_xMax = max(p1.x, p2.x) + 0.0001
-        p_xMin = min(p1.x, p2.x) - 0.0001
-        q_xMax = max(q1.x, q2.x) + 0.0001
-        q_xMin = min(q1.x, q2.x) - 0.0001
-
-        # Check if that point is within bounds
-        if x < p_xMax and x > p_xMin and x < q_xMax and x > q_xMin:
-            p_yMax = max(p1.y, p2.y) + 0.0001
-            p_yMin = min(p1.y, p2.y) - 0.0001
-            q_yMax = max(q1.y, q2.y) + 0.0001
-            q_yMin = min(q1.y, q2.y) - 0.0001
-            if y < p_yMax and y > p_yMin and y < q_yMax and y > q_yMin:
-                return True, vertex(vertex.V_INTERSECT, x, y)
-        # out of bounds
-        return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
-
-
-    def checkIntersect2(self, p1, p2, q1, q2):
         #todo input error check
 
         debugPrint("Check intersect")
@@ -234,15 +172,15 @@ class graph:
         debugPrint("newIndex {}".format(len(self.vertexList) -1))
         return len(self.vertexList) -1
 
-    def addEdge(self, v1Index, v2Index):
+    def addEdge(self, v1Index, v2Index, streetName):
         # create a list of edges that have already been checked to avoid repeating
         # since an edge can only intersect once
         #checkedList = [0] * len(self.edgeList)
         #for i, existingEdge in enumerate(self.edgeList):
         
-        self.__addEgde_r(v1Index, v2Index, 0, len(self.edgeList)-1)
+        self.__addEgde_r(v1Index, v2Index, streetName, 0, len(self.edgeList)-1)
 
-    def __addEgde_r(self, v1Index, v2Index, startIndex, endIndex):
+    def __addEgde_r(self, v1Index, v2Index, streetName, startIndex, endIndex):
         debugPrint("Add Edge: v1: {} v2: {} s: {} e: {}".format(v1Index, v2Index, startIndex, endIndex))
 
         if v1Index == v2Index:
@@ -256,41 +194,66 @@ class graph:
         #edgesToAdd = []
         #for i, existingEdge in enumerate(self.edgeList):
         #    if not checkedList[i]:
-        added = False
         for i in xrange(startIndex,endIndex+1):
-            p1 = self.vertexList[self.edgeList[i].v1]
-            p2 = self.vertexList[self.edgeList[i].v2]
-            q1 = self.vertexList[v1Index]
-            q2 = self.vertexList[v2Index]
-            intersect, interVertex = self.checkIntersect2(p1,p2,q1,q2)
-            if intersect:
-                debugPrint("Intersect")
-                # They intersected so add the new intersection (or promote to intersection)
-                vInterIndex = self.addVertex(interVertex)
-                # First split the existign edge into 2 new edges (if applicable)
-                if vInterIndex != self.edgeList[i].v1 and vInterIndex != self.edgeList[i].v2:
-                    # Add new edge, and adjust the old one
-                    temp = self.edgeList[i].v2
-                    self.edgeList.append(edge(vInterIndex, self.edgeList[i].v2))
-                    self.edgeList[i].v2 = vInterIndex
-                    debugPrint("--->Add split edge {} {}".format(vInterIndex, temp))
-                    debugPrint("--->Shrunk edge {} {} was {} {}".format(self.edgeList[i].v1, vInterIndex, self.edgeList[i].v1, temp))
+            # street cant intersect itself
+            if streetName != self.edgeList[i].streetName:
+                p1 = self.vertexList[self.edgeList[i].v1]
+                p2 = self.vertexList[self.edgeList[i].v2]
+                q1 = self.vertexList[v1Index]
+                q2 = self.vertexList[v2Index]
+                intersect, interVertex = self.checkIntersect(p1,p2,q1,q2)
+                if intersect:
+                    debugPrint("Intersect")
+                    # They intersected so add the new intersection (or promote to intersection)
+                    vInterIndex = self.addVertex(interVertex)
+                    # First split the existign edge into 2 new edges (if applicable)
+                    if vInterIndex != self.edgeList[i].v1 and vInterIndex != self.edgeList[i].v2:
+                        # Add new edge, and adjust the old one
+                        temp = self.edgeList[i].v2
+                        self.edgeList.append(edge(vInterIndex, self.edgeList[i].v2, self.edgeList[i].streetName))
+                        self.edgeList[i].v2 = vInterIndex
+                        debugPrint("--->Add split edge {} {}".format(vInterIndex, temp))
+                        debugPrint("--->Shrunk edge {} {} was {} {}".format(self.edgeList[i].v1, vInterIndex, self.edgeList[i].v1, temp))
+                        
                     
-                
-                if vInterIndex != v1Index and vInterIndex != v2Index:
-                    # if its not at the end of the segment
-                    # break up the segment to be added separately
-                    # MArk the original edge as added, the sub edges take care of it
-                    debugPrint("Recursive call {} {} and {} {}".format(v1Index, vInterIndex, vInterIndex, v2Index))
-                    added = True
-                    self.__addEgde_r(v1Index, vInterIndex, i+1, endIndex)
-                    self.__addEgde_r(vInterIndex, v2Index, i+1, endIndex)
+                    if vInterIndex != v1Index and vInterIndex != v2Index:
+                        # if its not at the end of the segment
+                        # break up the segment to be added separately
+                        # Return after this point because the the sub edges take care of adding it
+                        debugPrint("Recursive call {} {} and {} {}".format(v1Index, vInterIndex, vInterIndex, v2Index))
+                        self.__addEgde_r(v1Index, vInterIndex, streetName, i+1, endIndex)
+                        self.__addEgde_r(vInterIndex, v2Index, streetName, i+1, endIndex)
+                        return
+
+        # There were no intersections, so add the edge as-is
+        self.edgeList.append(edge(v1Index, v2Index, streetName))
+        debugPrint("--->Added non-intersect edge {} {}".format(v1Index, v2Index))
+
+    def pruneGraph(self):
+        # Prune the unwanted edges (edges that dont go to an intersection)
+        end = len(self.edgeList)
+        for i in xrange(end-1, -1, -1):
+            if self.vertexList[self.edgeList[i].v1].type != vertex.V_INTERSECT and self.vertexList[self.edgeList[i].v2].type != vertex.V_INTERSECT:
+                debugPrint("Delete edge: {}".format(i))
+                del self.edgeList[i]
+
+        # Prun any standed vertex
+        end = len(self.vertexList)
+        for i in xrange(end-1, -1, -1):
+            found = False
+            for j in xrange(0, len(self.edgeList)):
+                if self.edgeList[j].v1 == i or self.edgeList[j].v2 == i:
+                    found = True
                     break
 
-        if not added:
-            # There were no intersections, so add the edge as-is
-            self.edgeList.append(edge(v1Index, v2Index))
-            debugPrint("--->Added non-intersect edge {} {}".format(v1Index, v2Index))
+            if not found:
+                debugPrint("Delete vertex {}".format(i))
+                del self.vertexList[i]
+                for j in xrange(0, len(self.edgeList)):
+                    if self.edgeList[j].v1 > i:
+                        self.edgeList[j].v1 = self.edgeList[j].v1 - 1
+                    if self.edgeList[j].v2 > i:
+                        self.edgeList[j].v2 = self.edgeList[j].v2 - 1
     
     def printGraph(self):
         print("V = {")
@@ -305,11 +268,24 @@ class graph:
 
     def plotGraph(self):
         plt.figure()
-        x = [v.x for v in self.vertexList]
-        y = [v.y for v in self.vertexList]
-        plt.plot(x,y,marker='o', linestyle = 'None')
-        for i in xrange(0, len(x)):
-            plt.annotate("v{}".format(i), (x[i], y[i]))
+        # x = [v.x for v in self.vertexList]
+        # y = [v.y for v in self.vertexList]
+        # plt.plot(x,y,marker='o', linestyle = 'None')
+
+        xN = []
+        yN = []
+        xI = []
+        yI = []
+        for i, v in enumerate(self.vertexList):
+            plt.annotate("v{}".format(i), (v.x, v.y))
+            if v.type == vertex.V_NODE:
+                xN.append(v.x)
+                yN.append(v.y)
+            elif v.type == vertex.V_INTERSECT:
+                xI.append(v.x)
+                yI.append(v.y)
+        plt.plot(xN,yN,marker='o', linestyle = 'None')
+        plt.plot(xI,yI,marker='*', linestyle = 'None')
 
         for i, e in enumerate(self.edgeList):
             x = []
@@ -362,8 +338,11 @@ class streetDataBase:
             v1Index = self.g.addVertex(newStreet.vertexList[0])
             for v in newStreet.vertexList[1:]:
                 v2Index = self.g.addVertex(v)
-                self.g.addEdge(v1Index,v2Index)
+                self.g.addEdge(v1Index, v2Index, streetName)
                 v1Index = v2Index
+
+        self.g.pruneGraph()
+
 
 
 
