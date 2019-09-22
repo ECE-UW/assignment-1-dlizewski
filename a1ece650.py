@@ -3,14 +3,136 @@ import re
 import matplotlib.pyplot as plt
 
 PROMPT="$ "
-DEBUG=1
+DEBUG=0
+PLOT=1
+CATCH_ALL=0
 
-def printError(msg):
-    print("Error: {}".format(msg))
+def printError(msg, out=sys.stdout):
+    out.write("Error: {}\n".format(msg))
+
+def invalidInput(out=sys.stdout):
+    printError("Invalid Input", out)
 
 def debugPrint(msg):
     if DEBUG == 1:
         print("Debug: {}".format(msg))
+
+
+class invalidInputException(Exception):
+    pass
+
+class intersectException(Exception):
+    pass
+
+class duplicateException(Exception):
+    pass
+
+class nonExistException(Exception):
+    pass
+
+
+def checkIntersect(p1, p2, q1, q2):
+    #todo input error check
+
+    debugPrint("Check intersect")
+    debugPrint("Line1: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(p1.x, p1.y, p2.x, p2.y))
+    debugPrint("Line2: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(q1.x, q1.y, q2.x, q2.y))
+
+
+    # Create a representation of the line
+    # Paramaterize line 1 as:
+    # (1-n)p1 + n*p2 = (x,y)
+    # Paramaterize line 2 as:
+    # (1-m)q1 + m*q2 = (x,y)
+
+    # Equate the lines
+    # (1-n)p1 + n*p2 = (1-m)q1 + m*q2
+    # Rearage
+    # (p2-p1)*n + (q1-q2)*m = q1 - p1
+    # a*n + b*m = c
+    a = [0] * 2
+    a[0] = p2.x - p1.x
+    a[1] = p2.y - p1.y
+
+    b = [0] * 2
+    b[0] = q1.x - q2.x
+    b[1] = q1.y - q2.y
+    
+    c = [0] * 2
+    c[0] = q1.x - p1.x
+    c[1] = q1.y - p1.y
+
+    # Check if lines are parallel
+    # If the determinate on the 2x2 matrix is 0, they are parallel
+    det = a[0]*b[1] - b[0]*a[1]
+
+    # parallel line
+    if det == 0:
+        debugPrint("Parallel")
+        # check if they are the same line
+        # Check if q1 in p1 and p2
+        s = [-1]*2
+        if abs(p2.x - p1.x) > 0.0001:
+            s[0] = (q1.x - p1.x) / (p2.x-p1.x)
+        # elif abs(q1.x - p1.x) < 0.0001:
+        #     s[0] = 0.5 # For verticl case, set s[0] somewhere valid
+
+        if abs(p2.y - p1.y) > 0.0001:
+            s[1] = (q1.y - p1.y) / (p2.y-p1.y)
+        # elif abs(q1.y - p1.y) < 0.0001:
+        #     s[1] = 0.5 # For verticl case, set s[0] somewhere valid
+
+        if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
+            # vertical Line
+            s[0] = s[1]
+        elif abs(p2.y - p1.y) < 0.0001 and abs(q1.y - p1.y) < 0.0001:
+            # horizontal Line
+            s[1] = s[0]
+
+        debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
+            debugPrint("q1 in between")
+            return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
+
+        # Check if q2 in p1 and p2
+        s = [-1]*2
+        if abs(p2.x - p1.x) > 0.0001:
+            s[0] = (q2.x - p1.x) / (p2.x-p1.x)
+        # elif abs(q2.x - p1.x) < 0.0001:
+        #     s[0] = 0.5 # For verticl case, set s[0] somewhere valid
+
+        if abs(p2.y - p1.y) > 0.0001:
+            s[1] = (q2.y - p1.y) / (p2.y-p1.y)
+        # elif abs(q2.y - p1.y) < 0.0001:
+        #     s[1] = 0.5 # For horizontal case, set s[0] somewhere valid
+
+        if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
+            # vertical Line
+            s[0] = s[1]
+        elif abs(p2.y - p1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
+            # horizontal Line
+            s[1] = s[0]
+
+        
+
+        debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
+            debugPrint("q2 in between")
+            return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
+
+        return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
+
+    # Invert and evaluate the 2x2 matrix
+    n = (b[1]*c[0] - b[0]*c[1]) / det
+    m = (-1*a[1]*c[0] + a[0]*c[1]) / det
+
+    # Check bounds
+    if m > -0.0001 and m < 1.0001 and n > -0.0001 and n < 1.0001:
+        x = (1-n)*p1.x + n*p2.x
+        y = (1-n)*p1.y + n*p2.y
+        return True, vertex(vertex.V_INTERSECT, x, y)
+
+    return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
 
 class vertex:
     V_NODE = 0
@@ -55,6 +177,15 @@ class street:
         numVertex = len(self.vertexList)
         if numVertex > 1:
             self.edgeList.append(edge(numVertex-2, numVertex-1, self.name))
+            q1 = self.vertexList[numVertex-2]
+            q2 = self.vertexList[numVertex-1]
+            # Make sure it doesnt intersect with the same street
+            for i in xrange(0, len(self.edgeList)-2):
+                p1 = self.vertexList[self.edgeList[i].v1]
+                p2 = self.vertexList[self.edgeList[i].v2]
+                intersect, interVertex = checkIntersect(p1,p2,q1,q2)
+                if intersect:
+                    raise intersectException
 
 
 
@@ -62,101 +193,6 @@ class graph:
     def __init__(self):
         self.vertexList = []
         self.edgeList = []
-
-    def checkIntersect(self, p1, p2, q1, q2):
-        #todo input error check
-
-        debugPrint("Check intersect")
-        debugPrint("Line1: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(p1.x, p1.y, p2.x, p2.y))
-        debugPrint("Line2: ({:.2f},{:.2f}) <-> ({:.2f},{:.2f})".format(q1.x, q1.y, q2.x, q2.y))
-
-
-        # Create a representation of the line
-        # Paramaterize line 1 as:
-        # (1-n)p1 + n*p2 = (x,y)
-        # Paramaterize line 2 as:
-        # (1-m)q1 + m*q2 = (x,y)
-
-        # Equate the lines
-        # (1-n)p1 + n*p2 = (1-m)q1 + m*q2
-        # Rearage
-        # (p2-p1)*n + (q1-q2)*m = q1 - p1
-        # a*n + b*m = c
-        # 
-        a = [0] * 2
-        a[0] = p2.x - p1.x
-        a[1] = p2.y - p1.y
-
-        b = [0] * 2
-        b[0] = q1.x - q2.x
-        b[1] = q1.y - q2.y
-        
-        c = [0] * 2
-        c[0] = q1.x - p1.x
-        c[1] = q1.y - p1.y
-
-        # Check if lines are parallel
-        # If the determinate on the 2x2 matrix is 0, they are parallel
-        det = a[0]*b[1] - b[0]*a[1]
-
-        # parallel line
-        if det == 0:
-            debugPrint("Parallel")
-            # # check if they are the same line
-            # temp = p_a * (q1.x) + p_b * (q1.y)
-            # if abs(temp < 0.0001):
-            #     # Same line
-            #     # Check if they have overlap
-            #     if q1.x < max(p1.x, p2.x) and q1 > min(p1.x, p2.x):
-            #         return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
-            #     elif q2.x < max(p1.x, p2.x) and q2 > min(p1.x, p2.x):
-            #         return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
-            #     # Did not overlap
-
-            # Check if q1 in p1 and p2
-            s = [-1]*2
-            if p2.x != p1.x:
-                s[0] = (q1.x - p1.x) / (p2.x-p1.x)
-            elif q1.x == p1.x:
-                s[0] = 0.5 # For verticl case, set s[0] somewhere valid
-
-            if p2.y != p1.y:
-                s[1] = (q1.y - p1.y) / (p2.y-p1.y)
-            elif q1.y == p1.y:
-                s[1] = 0.5 # For verticl case, set s[0] somewhere valid
-
-            if s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
-                return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
-
-            # Check if q2 in p1 and p2
-            s = [-1]*2
-            if p2.x != p1.x:
-                s[0] = (q2.x - p1.x) / (p2.x-p1.x)
-            elif q2.x == p1.x:
-                s[0] = 0.5 # For verticl case, set s[0] somewhere valid
-
-            if p2.y != p1.y:
-                s[1] = (q2.y - p1.y) / (p2.y-p1.y)
-            elif q2.y == p1.y:
-                s[1] = 0.5 # For verticl case, set s[0] somewhere valid
-
-            if s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
-                return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
-
-            return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
-
-        # Invert and multiply 2x2 the matrix
-        n = (b[1]*c[0] - b[0]*c[1]) / det
-        m = (-1*a[1]*c[0] + a[0]*c[1]) / det
-
-        # Check bounds
-        if m > -0.0001 and m < 1.0001 and n > -0.0001 and n < 1.0001:
-            x = (1-n)*p1.x + n*p2.x
-            y = (1-n)*p1.y + n*p2.y
-            return True, vertex(vertex.V_INTERSECT, x, y)
-
-        return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
-
 
     def addVertex(self, newVertex):
         debugPrint("Add vertex ({:2f},{:2f})".format(newVertex.x, newVertex.y))
@@ -190,6 +226,13 @@ class graph:
         # if len(self.edgeList) != 0 and startIndex > endIndex:
         #     debugPrint("End of search")
         #     return
+
+        # Check if it already exists
+        for e in self.edgeList:
+            if (v1Index == e.v1 and v2Index == e.v2) or (v1Index == e.v2 and v2Index == e.v1):
+                #Already in set skip
+                return
+
         
         #edgesToAdd = []
         #for i, existingEdge in enumerate(self.edgeList):
@@ -201,7 +244,7 @@ class graph:
                 p2 = self.vertexList[self.edgeList[i].v2]
                 q1 = self.vertexList[v1Index]
                 q2 = self.vertexList[v2Index]
-                intersect, interVertex = self.checkIntersect(p1,p2,q1,q2)
+                intersect, interVertex = checkIntersect(p1,p2,q1,q2)
                 if intersect:
                     debugPrint("Intersect")
                     # They intersected so add the new intersection (or promote to intersection)
@@ -255,51 +298,48 @@ class graph:
                     if self.edgeList[j].v2 > i:
                         self.edgeList[j].v2 = self.edgeList[j].v2 - 1
     
-    def printGraph(self):
-        print("V = {")
+    def printGraph(self, out=sys.stdout):
+        out.write("V = {\n")
         for i, v in enumerate(self.vertexList):
-            print("  {}: ({:.2f},{:.2f})".format(i, v.x,v.y))
-        print("}")
+            out.write("  {}: ({:.2f},{:.2f})\n".format(i, v.x,v.y))
+        out.write("}\n")
 
-        print("E = {")
+        out.write("E = {\n")
         for i, e in enumerate(self.edgeList):
-            print("  <{},{}>".format(e.v1,e.v2))
-        print("}")
+            out.write("  <{},{}>\n".format(e.v1,e.v2))
+        out.write("}\n")
 
     def plotGraph(self):
-        plt.figure()
-        # x = [v.x for v in self.vertexList]
-        # y = [v.y for v in self.vertexList]
-        # plt.plot(x,y,marker='o', linestyle = 'None')
+        if PLOT == 1:
+            plt.figure()
+            xN = []
+            yN = []
+            xI = []
+            yI = []
+            for i, v in enumerate(self.vertexList):
+                plt.annotate("v{}".format(i), (v.x, v.y))
+                if v.type == vertex.V_NODE:
+                    xN.append(v.x)
+                    yN.append(v.y)
+                elif v.type == vertex.V_INTERSECT:
+                    xI.append(v.x)
+                    yI.append(v.y)
+            plt.plot(xN,yN,marker='o', linestyle = 'None', markersize=12)
+            plt.plot(xI,yI,marker='*', linestyle = 'None', markersize=12)
 
-        xN = []
-        yN = []
-        xI = []
-        yI = []
-        for i, v in enumerate(self.vertexList):
-            plt.annotate("v{}".format(i), (v.x, v.y))
-            if v.type == vertex.V_NODE:
-                xN.append(v.x)
-                yN.append(v.y)
-            elif v.type == vertex.V_INTERSECT:
-                xI.append(v.x)
-                yI.append(v.y)
-        plt.plot(xN,yN,marker='o', linestyle = 'None')
-        plt.plot(xI,yI,marker='*', linestyle = 'None')
+            for i, e in enumerate(self.edgeList):
+                x = []
+                x.append(self.vertexList[e.v1].x)
+                x.append(self.vertexList[e.v2].x)
 
-        for i, e in enumerate(self.edgeList):
-            x = []
-            x.append(self.vertexList[e.v1].x)
-            x.append(self.vertexList[e.v2].x)
+                y = []
+                y.append(self.vertexList[e.v1].y)
+                y.append(self.vertexList[e.v2].y)
+                plt.plot(x,y)
 
-            y = []
-            y.append(self.vertexList[e.v1].y)
-            y.append(self.vertexList[e.v2].y)
-            plt.plot(x,y)
-
-            xMid = sum(x)/len(x)
-            yMid = sum(y)/len(y)
-            plt.annotate("e{}".format(i), (xMid, yMid))
+                xMid = sum(x)/len(x)
+                yMid = sum(y)/len(y)
+                plt.annotate("e{}".format(i), (xMid, yMid))
 
 
 class streetDataBase:
@@ -308,21 +348,30 @@ class streetDataBase:
         self.g = graph()
 
     def addStreet(self, newStreet):
+        if self.checkStreetExists(newStreet.name):
+            raise duplicateException
         self.streetDB[newStreet.name] = newStreet
 
-    def removeStreet(self, newStreet):
-        del self.streetDB[newStreet.name]
+    def removeStreet(self, streetName):
+        if not self.checkStreetExists(streetName):
+            raise nonExistException
+        del self.streetDB[streetName]
 
-    def checkStreetExists(self, newStreet):
-        return (newStreet.name in self.streetDB)
+    def replaceStreet(self, newStreet):
+        self.removeStreet(newStreet.name)
+        self.addStreet(newStreet)
+
+    def checkStreetExists(self, streetName):
+        return (streetName in self.streetDB)
 
     def plotStreets(self):
-        plt.figure()
-        for streetName in self.streetDB:
-            street = self.streetDB[streetName]
-            x = [v.x for v in street.vertexList]
-            y = [v.y for v in street.vertexList]
-            plt.plot(x,y,marker='o')
+        if PLOT == 1:
+            plt.figure()
+            for streetName in self.streetDB:
+                street = self.streetDB[streetName]
+                x = [v.x for v in street.vertexList]
+                y = [v.y for v in street.vertexList]
+                plt.plot(x,y,marker='o')
 
     def generateGraph(self):
         self.g = graph()
@@ -344,23 +393,27 @@ class streetDataBase:
         self.g.pruneGraph()
 
 
+def parseStreetText(line, out=sys.stdout, errOut=sys.stderr):
 
+    r = re.compile(r'^\s+"[a-zA-Z\s]+"\s+(\s*\(\s*-?\d+\s*,\s*-?\d+\s*\)){2,}$')
+    match = r.findall(line)
+    #match = r.search(line)
+    #if match == 'None':
+    if len(match) != 1:
+        raise invalidInputException("Did not match input")
 
-
-
-def parseStreetText(line):
-
-    r = re.compile(r'("[a-zA-Z\s]+")')
+    r = re.compile(r'"[a-zA-Z\s]+"')
     name = r.findall(line)[0]
 
     newStreet = street(name)
 
-    r = re.compile(r'(\(-?\w*,-?\w*\))')
+    r = re.compile(r'\(\s*-?\d+\s*,\s*-?\d+\s*\)')
     bracketGroups = r.findall(line)
     for b in bracketGroups:
-        b = b[1:-1]
-        b.replace(" ", "")
-        pattern = re.compile(r'\s|\(|\)')
+        #b = b[1:-1]
+        # b.replace(" ", "")
+        #b = re.sub("\s", "", b) #Remove all white space
+        pattern = re.compile(r'\s|\(|\)') #Remove all white space and brackets
         b = re.sub(pattern, '', b)
         nums = b.split(',')
         x = float(nums[0])
@@ -369,79 +422,133 @@ def parseStreetText(line):
 
     return newStreet
 
-def parseAddCommand(line):
+def tryToCreateStreet(line, out=sys.stdout, errOut=sys.stderr):
+
+    try:
+        newStreet = parseStreetText(line)
+    except invalidInputException:
+        invalidInput(errOut)
+        return None
+    except intersectException:
+        printError("Streets Cannot Self Intersect", errOut)
+        return None
+    except duplicateException:
+        printError("Street Names Must be Unique", errOut)
+        return None
+    except Exception as e:
+        debugPrint(e)
+        invalidInput(errOut)
+        if not CATCH_ALL:
+            raise e
+        return None
+
+    newStreet.printStreet()
+    return newStreet
+
+def parseAddCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     debugPrint("Add a street")
-    try:
-        newStreet = parseStreetText(line)
-    except Exception as e:
-        debugPrint(e)
-        printError("Invalid Input")
+
+    newStreet = tryToCreateStreet(line[1:], out, errOut)
+    if newStreet == None:
         return
 
     newStreet.printStreet()
-    streetDB.addStreet(newStreet)
+    try:
+        streetDB.addStreet(newStreet)
+    except duplicateException:
+        printError("Street Names Must be Unique", errOut)
+        return
+    except Exception as e:
+        debugPrint(e)
+        invalidInput(errOut)
+        if not CATCH_ALL:
+            raise e
+        return
+    
 
 
-def parseChangeCommand(line):
+def parseChangeCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     debugPrint("change a specification")
-    try:
-        newStreet = parseStreetText(line)
-    except Exception as e:
-        debugPrint(e)
-        printError("Invalid Input")
+    newStreet = tryToCreateStreet(line[1:], out, errOut)
+    if newStreet == None:
         return
 
-    newStreet.printStreet()
+    try:
+        streetDB.replaceStreet(newStreet)
+    except nonExistException:
+        printError("Street Does not Exist", errOut)
+        return
+    except Exception as e:
+        debugPrint(e)
+        invalidInput(errOut)
+        if not CATCH_ALL:
+            raise e
+        return
 
-def parseRemoveCommand(line):
+def parseRemoveCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     debugPrint("remove a street")
 
-def parseGraphCommand(line):
+    try:
+        r = re.compile(r'^\s*r\s+"[a-zA-Z\s]+"\s*$')
+        match = r.findall(line)
+        if len(match) != 1:
+            raise invalidInputException("Did not match input")
+        
+        r = re.compile(r'"[a-zA-Z\s]+"')
+        streetName = r.findall(line)[0]
+        streetDB.removeStreet(streetName)
+
+    except invalidInputException:
+        invalidInput(errOut)
+        return
+    except nonExistException:
+        printError("Street Does not Exist", errOut)
+        return
+    except Exception as e:
+        debugPrint(e)
+        invalidInput(errOut)
+        if not CATCH_ALL:
+            raise e
+        return
+    
+
+def parseGraphCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     debugPrint("output graph")
 
     streetDB.generateGraph()
-    streetDB.g.printGraph()
+    streetDB.g.printGraph(out)
 
     streetDB.plotStreets()
     streetDB.g.plotGraph()
     plt.show()
 
-streetDB = streetDataBase()
-
 
 def main():
 
-    SAMPLE_TEXT = []
-    SAMPLE_TEXT.append('a "Weber Street" (2,-1) (2,2) (5,5) (5,6) (3,8)')
-    SAMPLE_TEXT.append('a "King Street S" (4,2) (4,8)')
-    SAMPLE_TEXT.append('a "Davenport Road" (1,4) (5,8)')
-    i = 0;
+    streetDB = streetDataBase()
 
     while True:
         sys.stdout.write(PROMPT)
-        if i < len(SAMPLE_TEXT):
-            line = SAMPLE_TEXT[i]
-            i = i + 1
-        else:
-            line = sys.stdin.readline()
+        line = sys.stdin.readline()
 
         if line == '':
-            continue
+            break
 
+        line = line.strip()
         cmd = line[0]
         if cmd == 'a':
             # Add street
-            parseAddCommand(line)
+            parseAddCommand(streetDB, line)
 
         elif cmd == 'c':
             # change specification
-            parseChangeCommand(line)
+            parseChangeCommand(streetDB, line)
         elif cmd == 'r':
             # remove street
-            parseRemoveCommand(line)
+            parseRemoveCommand(streetDB, line)
         elif cmd == 'g':
             # output graph
-            parseGraphCommand(line)
+            parseGraphCommand(streetDB, line)
         else:
             printError("Unknown command")
 
