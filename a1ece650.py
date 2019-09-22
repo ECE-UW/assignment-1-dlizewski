@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 PROMPT="$ "
 DEBUG=0
-PLOT=1
+PLOT=0
 CATCH_ALL=0
 
 def printError(msg, out=sys.stdout):
@@ -74,13 +74,9 @@ def checkIntersect(p1, p2, q1, q2):
         s = [-1]*2
         if abs(p2.x - p1.x) > 0.0001:
             s[0] = (q1.x - p1.x) / (p2.x-p1.x)
-        # elif abs(q1.x - p1.x) < 0.0001:
-        #     s[0] = 0.5 # For verticl case, set s[0] somewhere valid
 
         if abs(p2.y - p1.y) > 0.0001:
             s[1] = (q1.y - p1.y) / (p2.y-p1.y)
-        # elif abs(q1.y - p1.y) < 0.0001:
-        #     s[1] = 0.5 # For verticl case, set s[0] somewhere valid
 
         if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
             # vertical Line
@@ -90,7 +86,7 @@ def checkIntersect(p1, p2, q1, q2):
             s[1] = s[0]
 
         debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
             debugPrint("q1 in between")
             return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
 
@@ -98,13 +94,9 @@ def checkIntersect(p1, p2, q1, q2):
         s = [-1]*2
         if abs(p2.x - p1.x) > 0.0001:
             s[0] = (q2.x - p1.x) / (p2.x-p1.x)
-        # elif abs(q2.x - p1.x) < 0.0001:
-        #     s[0] = 0.5 # For verticl case, set s[0] somewhere valid
 
         if abs(p2.y - p1.y) > 0.0001:
             s[1] = (q2.y - p1.y) / (p2.y-p1.y)
-        # elif abs(q2.y - p1.y) < 0.0001:
-        #     s[1] = 0.5 # For horizontal case, set s[0] somewhere valid
 
         if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
             # vertical Line
@@ -116,7 +108,7 @@ def checkIntersect(p1, p2, q1, q2):
         
 
         debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001 and s[1] > -0.0001 and s[1] < 1.0001:
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
             debugPrint("q2 in between")
             return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
 
@@ -168,14 +160,15 @@ class street:
             debugPrint("{}: <{},{}>".format(i, e.v1, e.v2))
 
     def addVertex(self, newVertex):
-        # Add the new vertex to the list
-        # TODO check if its not the same as the last vertex
-        # Maybe dont bother as streets dont intersect themselves?
-        # Or maybe check that as an error condition?
         self.vertexList.append(newVertex)
         # Add the edge
         numVertex = len(self.vertexList)
         if numVertex > 1:
+            # Check if we are adding 2 of the same vertex
+            if self.vertexList[numVertex-1].compareVertex(self.vertexList[numVertex-2]):
+                raise intersectException
+
+            # Add the edge
             self.edgeList.append(edge(numVertex-2, numVertex-1, self.name))
             q1 = self.vertexList[numVertex-2]
             q2 = self.vertexList[numVertex-1]
@@ -209,11 +202,6 @@ class graph:
         return len(self.vertexList) -1
 
     def addEdge(self, v1Index, v2Index, streetName):
-        # create a list of edges that have already been checked to avoid repeating
-        # since an edge can only intersect once
-        #checkedList = [0] * len(self.edgeList)
-        #for i, existingEdge in enumerate(self.edgeList):
-        
         self.__addEgde_r(v1Index, v2Index, streetName, 0, len(self.edgeList)-1)
 
     def __addEgde_r(self, v1Index, v2Index, streetName, startIndex, endIndex):
@@ -223,20 +211,12 @@ class graph:
             debugPrint("Zero length edge")
             return
 
-        # if len(self.edgeList) != 0 and startIndex > endIndex:
-        #     debugPrint("End of search")
-        #     return
-
         # Check if it already exists
         for e in self.edgeList:
             if (v1Index == e.v1 and v2Index == e.v2) or (v1Index == e.v2 and v2Index == e.v1):
                 #Already in set skip
                 return
 
-        
-        #edgesToAdd = []
-        #for i, existingEdge in enumerate(self.edgeList):
-        #    if not checkedList[i]:
         for i in xrange(startIndex,endIndex+1):
             # street cant intersect itself
             if streetName != self.edgeList[i].streetName:
@@ -249,7 +229,7 @@ class graph:
                     debugPrint("Intersect")
                     # They intersected so add the new intersection (or promote to intersection)
                     vInterIndex = self.addVertex(interVertex)
-                    # First split the existign edge into 2 new edges (if applicable)
+                    # First split the existing edge into 2 new edges (if applicable)
                     if vInterIndex != self.edgeList[i].v1 and vInterIndex != self.edgeList[i].v2:
                         # Add new edge, and adjust the old one
                         temp = self.edgeList[i].v2
@@ -260,8 +240,7 @@ class graph:
                         
                     
                     if vInterIndex != v1Index and vInterIndex != v2Index:
-                        # if its not at the end of the segment
-                        # break up the segment to be added separately
+                        # if its not at the end of the segment, break up the segment to be added separately
                         # Return after this point because the the sub edges take care of adding it
                         debugPrint("Recursive call {} {} and {} {}".format(v1Index, vInterIndex, vInterIndex, v2Index))
                         self.__addEgde_r(v1Index, vInterIndex, streetName, i+1, endIndex)
@@ -280,7 +259,7 @@ class graph:
                 debugPrint("Delete edge: {}".format(i))
                 del self.edgeList[i]
 
-        # Prun any standed vertex
+        # Prune any vertex that do not have edges
         end = len(self.vertexList)
         for i in xrange(end-1, -1, -1):
             found = False
@@ -378,12 +357,6 @@ class streetDataBase:
         for streetName, newStreet in self.streetDB.items():
             debugPrint("***** Add street: {} *****".format(streetName))
             # Add the first vertex
-            # v1Index = self.g.addVertex(newStreet.vertexList[newStreet.edgeList[0].v1])
-            # for streetEdge in newStreet.edgeList:
-            #     v2Index = self.g.addVertex(newStreet.vertexList[streetEdge.v2])
-            #     self.g.addEdge(v1Index,v2Index)
-            #     v1Index = v2Index
-            
             v1Index = self.g.addVertex(newStreet.vertexList[0])
             for v in newStreet.vertexList[1:]:
                 v2Index = self.g.addVertex(v)
@@ -395,10 +368,9 @@ class streetDataBase:
 
 def parseStreetText(line, out=sys.stdout, errOut=sys.stderr):
 
+    # First make sure its a valid input
     r = re.compile(r'^\s+"[a-zA-Z\s]+"\s+(\s*\(\s*-?\d+\s*,\s*-?\d+\s*\)){2,}$')
     match = r.findall(line)
-    #match = r.search(line)
-    #if match == 'None':
     if len(match) != 1:
         raise invalidInputException("Did not match input")
 
@@ -410,9 +382,6 @@ def parseStreetText(line, out=sys.stdout, errOut=sys.stderr):
     r = re.compile(r'\(\s*-?\d+\s*,\s*-?\d+\s*\)')
     bracketGroups = r.findall(line)
     for b in bracketGroups:
-        #b = b[1:-1]
-        # b.replace(" ", "")
-        #b = re.sub("\s", "", b) #Remove all white space
         pattern = re.compile(r'\s|\(|\)') #Remove all white space and brackets
         b = re.sub(pattern, '', b)
         nums = b.split(',')
@@ -514,6 +483,9 @@ def parseRemoveCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
 
 def parseGraphCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     debugPrint("output graph")
+    if(line != 'g'):
+        invalidInput(errOut)
+        return
 
     streetDB.generateGraph()
     streetDB.g.printGraph(out)
@@ -521,6 +493,28 @@ def parseGraphCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     streetDB.plotStreets()
     streetDB.g.plotGraph()
     plt.show()
+
+
+def parseInput(streetDB, line, out=sys.stdout, errOut=sys.stderr):
+    line = line.strip()
+    if len(line) == 0:
+        return
+
+    cmd = line[0]
+    if cmd == 'a':
+        # Add street
+        parseAddCommand(streetDB, line, out, errOut)
+    elif cmd == 'c':
+        # change specification
+        parseChangeCommand(streetDB, line, out, errOut)
+    elif cmd == 'r':
+        # remove street
+        parseRemoveCommand(streetDB, line, out, errOut)
+    elif cmd == 'g':
+        # output graph
+        parseGraphCommand(streetDB, line, out, errOut)
+    else:
+        printError("Unknown command")
 
 
 def main():
@@ -534,23 +528,7 @@ def main():
         if line == '':
             break
 
-        line = line.strip()
-        cmd = line[0]
-        if cmd == 'a':
-            # Add street
-            parseAddCommand(streetDB, line)
-
-        elif cmd == 'c':
-            # change specification
-            parseChangeCommand(streetDB, line)
-        elif cmd == 'r':
-            # remove street
-            parseRemoveCommand(streetDB, line)
-        elif cmd == 'g':
-            # output graph
-            parseGraphCommand(streetDB, line)
-        else:
-            printError("Unknown command")
+        parseInput(streetDB, line)
 
     # return exit code 0 on successful termination
     sys.exit(0)
