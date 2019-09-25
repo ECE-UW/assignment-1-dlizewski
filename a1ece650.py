@@ -1,12 +1,15 @@
 import sys
 import re
-import matplotlib.pyplot as plt
 
 PROMPT="$ "
-DEBUG=0
-PLOT=0
+DEBUG=1
+PLOT=1
 CATCH_ALL=0
 
+if PLOT == 1:
+    import matplotlib.pyplot as plt
+
+# Printing functions
 def printError(msg, out=sys.stdout):
     out.write("Error: {}\n".format(msg))
 
@@ -18,6 +21,7 @@ def debugPrint(msg):
         print("Debug: {}".format(msg))
 
 
+# Exceptions
 class invalidInputException(Exception):
     pass
 
@@ -31,6 +35,7 @@ class nonExistException(Exception):
     pass
 
 
+# Check if 2 vertex intersect
 def checkIntersect(p1, p2, q1, q2):
     #todo input error check
 
@@ -67,50 +72,68 @@ def checkIntersect(p1, p2, q1, q2):
     det = a[0]*b[1] - b[0]*a[1]
 
     # parallel line
-    if det == 0:
-        debugPrint("Parallel")
-        # check if they are the same line
-        # Check if q1 in p1 and p2
-        s = [-1]*2
-        if abs(p2.x - p1.x) > 0.0001:
-            s[0] = (q1.x - p1.x) / (p2.x-p1.x)
+    if abs(det) < 0.0001:
+        # debugPrint("Parallel")
+        # # check if they are the same line
+        # # Check if q1 in p1 and p2
+        # s = [-1]*2
+        # if abs(p2.x - p1.x) > 0.0001:
+        #     s[0] = (q1.x - p1.x) / (p2.x-p1.x)
 
-        if abs(p2.y - p1.y) > 0.0001:
-            s[1] = (q1.y - p1.y) / (p2.y-p1.y)
+        # if abs(p2.y - p1.y) > 0.0001:
+        #     s[1] = (q1.y - p1.y) / (p2.y-p1.y)
 
-        if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
-            # vertical Line
-            s[0] = s[1]
-        elif abs(p2.y - p1.y) < 0.0001 and abs(q1.y - p1.y) < 0.0001:
-            # horizontal Line
-            s[1] = s[0]
+        # if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
+        #     # vertical Line
+        #     s[0] = s[1]
+        # elif abs(p2.y - p1.y) < 0.0001 and abs(q1.y - p1.y) < 0.0001:
+        #     # horizontal Line
+        #     s[1] = s[0]
 
-        debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
-            debugPrint("q1 in between")
-            return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
+        # debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+        #     debugPrint("q1 in between")
+        #     return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
 
-        # Check if q2 in p1 and p2
-        s = [-1]*2
-        if abs(p2.x - p1.x) > 0.0001:
-            s[0] = (q2.x - p1.x) / (p2.x-p1.x)
+        # # Check if q2 in p1 and p2
+        # s = [-1]*2
+        # if abs(p2.x - p1.x) > 0.0001:
+        #     s[0] = (q2.x - p1.x) / (p2.x-p1.x)
 
-        if abs(p2.y - p1.y) > 0.0001:
-            s[1] = (q2.y - p1.y) / (p2.y-p1.y)
+        # if abs(p2.y - p1.y) > 0.0001:
+        #     s[1] = (q2.y - p1.y) / (p2.y-p1.y)
 
-        if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
-            # vertical Line
-            s[0] = s[1]
-        elif abs(p2.y - p1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
-            # horizontal Line
-            s[1] = s[0]
+        # if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
+        #     # vertical Line
+        #     s[0] = s[1]
+        # elif abs(p2.y - p1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
+        #     # horizontal Line
+        #     s[1] = s[0]
 
-        
+        # debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+        #     debugPrint("q2 in between")
+        #     return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
 
-        debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
-            debugPrint("q2 in between")
-            return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
+        # # Check if p1 in 11 and 22
+        # s = [-1]*2
+        # if abs(q2.x - q1.x) > 0.0001:
+        #     s[0] = (p1.x - q1.x) / (q2.x-q1.x)
+
+        # if abs(q2.y - q1.y) > 0.0001:
+        #     s[1] = (p1.y- q1.y) / (q2.y-q1.y)
+
+        # if abs(q2.x - q1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
+        #     # vertical Line
+        #     s[0] = s[1]
+        # elif abs(q2.y - q1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
+        #     # horizontal Line
+        #     s[1] = s[0]
+
+        # debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+        #     debugPrint("p1 in between")
+        #     return True, vertex(vertex.V_INTERSECT, p1.x, p1.y)
 
         return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
 
@@ -126,6 +149,7 @@ def checkIntersect(p1, p2, q1, q2):
 
     return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
 
+# Vertex class used to represent a point
 class vertex:
     V_NODE = 0
     V_INTERSECT = 1
@@ -139,12 +163,14 @@ class vertex:
             return True
         return False
 
+#Edge class used to represent an edge
 class edge:
     def __init__(self, v1, v2, streetName):
         self.v1 = v1
         self.v2 = v2
         self.streetName = streetName
 
+#Street class comprised of a list of vertex and edges
 class street:
     def __init__(self, name):
         self.name = name
@@ -214,7 +240,14 @@ class graph:
         # Check if it already exists
         for e in self.edgeList:
             if (v1Index == e.v1 and v2Index == e.v2) or (v1Index == e.v2 and v2Index == e.v1):
-                #Already in set skip
+                debugPrint("edge already in graph")
+                #Already in set, so dont add the edge.
+                #If this is part of a different street, then both points are intersections,
+                #so promote the vertex
+                # if e.streetName != streetName:
+                #     debugPrint("promoted existing edge")
+                #     self.vertexList[e.v1].type = vertex.V_INTERSECT
+                #     self.vertexList[e.v2].type = vertex.V_INTERSECT
                 return
 
         for i in xrange(startIndex,endIndex+1):
@@ -285,7 +318,10 @@ class graph:
 
         out.write("E = {\n")
         for i, e in enumerate(self.edgeList):
-            out.write("  <{},{}>\n".format(e.v1,e.v2))
+            out.write("  <{},{}>".format(e.v1,e.v2))
+            if i != len(self.edgeList)-1:
+                out.write(',')
+            out.write('\n')
         out.write("}\n")
 
     def plotGraph(self):
@@ -319,6 +355,35 @@ class graph:
                 xMid = sum(x)/len(x)
                 yMid = sum(y)/len(y)
                 plt.annotate("e{}".format(i), (xMid, yMid))
+    
+    def compare(self, g2):
+        if len(self.vertexList) != len(g2.vertexList):
+            debugPrint("Not same length vertex")
+            return False
+
+        if len(self.edgeList) != len(g2.edgeList):
+            debugPrint("Not same length edge")
+            return False
+
+        vLUT = [-1]*len(self.vertexList)
+        eLUT = [-1]*len(self.edgeList)
+        for i, v in enumerate(self.vertexList):
+            for j, v2 in enumerate(g2.vertexList):
+                if v.compareVertex(v2):
+                    vLUT[i] = j
+                    break
+            if vLUT[i] < 0:
+                debugPrint("Could not find vertex {}".format(i))
+                return False
+
+        for i, e in enumerate(self.edgeList):
+            for j, e2 in enumerate(g2.edgeList):
+                if (vLUT[e.v1] == e2.v1 and vLUT[e.v2] == e2.v2) or (vLUT[e.v1] == e2.v2 and vLUT[e.v2] == e2.v1):
+                    eLUT[i] = j
+            if eLUT[i] < 0:
+                debugPrint("Could not find edge {}".format(i))
+                return False  
+        return True
 
 
 class streetDataBase:
@@ -375,15 +440,15 @@ def parseStreetText(line, out=sys.stdout, errOut=sys.stderr):
         raise invalidInputException("Did not match input")
 
     r = re.compile(r'"[a-zA-Z\s]+"')
-    name = r.findall(line)[0]
+    name = r.findall(line)[0].lower()
 
     newStreet = street(name)
 
     r = re.compile(r'\(\s*-?\d+\s*,\s*-?\d+\s*\)')
     bracketGroups = r.findall(line)
     for b in bracketGroups:
-        pattern = re.compile(r'\s|\(|\)') #Remove all white space and brackets
-        b = re.sub(pattern, '', b)
+        r = re.compile(r'\s|\(|\)') #Remove all white space and brackets
+        b = r.sub('',b)
         nums = b.split(',')
         x = float(nums[0])
         y = float(nums[1])
@@ -464,7 +529,7 @@ def parseRemoveCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
             raise invalidInputException("Did not match input")
         
         r = re.compile(r'"[a-zA-Z\s]+"')
-        streetName = r.findall(line)[0]
+        streetName = r.findall(line)[0].lower()
         streetDB.removeStreet(streetName)
 
     except invalidInputException:
@@ -490,9 +555,10 @@ def parseGraphCommand(streetDB, line, out=sys.stdout, errOut=sys.stderr):
     streetDB.generateGraph()
     streetDB.g.printGraph(out)
 
-    streetDB.plotStreets()
-    streetDB.g.plotGraph()
-    plt.show()
+    if PLOT == 1:
+        streetDB.plotStreets()
+        streetDB.g.plotGraph()
+        plt.show()
 
 
 def parseInput(streetDB, line, out=sys.stdout, errOut=sys.stderr):
