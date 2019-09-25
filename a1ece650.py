@@ -2,8 +2,8 @@ import sys
 import re
 
 PROMPT="$ "
-DEBUG=1
-PLOT=1
+DEBUG=0
+PLOT=0
 CATCH_ALL=0
 
 if PLOT == 1:

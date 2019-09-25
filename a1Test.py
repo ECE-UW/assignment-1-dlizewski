@@ -182,12 +182,12 @@ class testAll(unittest.TestCase):
         self.assertTrue(compareGraphs(output, NULL_GRAPH));
 
     def test_colinear(self):
-        # line = 'a "street one" (-2,2) (-2,-1) (2,-1) (2,-3)'
-        # self.sendCheckResponse(line, COMMAND_ACCEPTED)
-        # line = 'a "street two" (-3,1) (-2,1) (-2,0) (-3,0)'
-        # self.sendCheckResponse(line, COMMAND_ACCEPTED)
-        # line = 'a "street three" (0,0) (0,-1) (5,-1) (5,0)'
-        # self.sendCheckResponse(line, COMMAND_ACCEPTED)
+        line = 'a "street one" (-2,2) (-2,-1) (2,-1) (2,-3)'
+        self.sendCheckResponse(line, COMMAND_ACCEPTED)
+        line = 'a "street two" (-3,1) (-2,1) (-2,0) (-3,0)'
+        self.sendCheckResponse(line, COMMAND_ACCEPTED)
+        line = 'a "street three" (0,0) (0,-1) (5,-1) (5,0)'
+        self.sendCheckResponse(line, COMMAND_ACCEPTED)
         line = 'a "street four" (2,5) (5,2)'
         self.sendCheckResponse(line, COMMAND_ACCEPTED)
         line = 'a "street five" (2,6) (3,4) (4,3) (6,2)'
