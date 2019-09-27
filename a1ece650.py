@@ -4,7 +4,7 @@ import re
 PROMPT="$ "
 DEBUG=0
 PLOT=0
-CATCH_ALL=0
+CATCH_ALL=1
 
 if PLOT == 1:
     import matplotlib.pyplot as plt
@@ -73,67 +73,67 @@ def checkIntersect(p1, p2, q1, q2):
 
     # parallel line
     if abs(det) < 0.0001:
-        # debugPrint("Parallel")
-        # # check if they are the same line
-        # # Check if q1 in p1 and p2
-        # s = [-1]*2
-        # if abs(p2.x - p1.x) > 0.0001:
-        #     s[0] = (q1.x - p1.x) / (p2.x-p1.x)
+        debugPrint("Parallel")
+        # check if they are the same line
+        # Check if q1 in p1 and p2
+        s = [-1]*2
+        if abs(p2.x - p1.x) > 0.0001:
+            s[0] = (q1.x - p1.x) / (p2.x-p1.x)
 
-        # if abs(p2.y - p1.y) > 0.0001:
-        #     s[1] = (q1.y - p1.y) / (p2.y-p1.y)
+        if abs(p2.y - p1.y) > 0.0001:
+            s[1] = (q1.y - p1.y) / (p2.y-p1.y)
 
-        # if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
-        #     # vertical Line
-        #     s[0] = s[1]
-        # elif abs(p2.y - p1.y) < 0.0001 and abs(q1.y - p1.y) < 0.0001:
-        #     # horizontal Line
-        #     s[1] = s[0]
+        if abs(p2.x - p1.x) < 0.0001 and abs(q1.x - p1.x) < 0.0001:
+            # vertical Line
+            s[0] = s[1]
+        elif abs(p2.y - p1.y) < 0.0001 and abs(q1.y - p1.y) < 0.0001:
+            # horizontal Line
+            s[1] = s[0]
 
-        # debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
-        #     debugPrint("q1 in between")
-        #     return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
+        debugPrint("Q1 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+            debugPrint("q1 in between")
+            return True, vertex(vertex.V_INTERSECT, q1.x, q1.y)
 
-        # # Check if q2 in p1 and p2
-        # s = [-1]*2
-        # if abs(p2.x - p1.x) > 0.0001:
-        #     s[0] = (q2.x - p1.x) / (p2.x-p1.x)
+        # Check if q2 in p1 and p2
+        s = [-1]*2
+        if abs(p2.x - p1.x) > 0.0001:
+            s[0] = (q2.x - p1.x) / (p2.x-p1.x)
 
-        # if abs(p2.y - p1.y) > 0.0001:
-        #     s[1] = (q2.y - p1.y) / (p2.y-p1.y)
+        if abs(p2.y - p1.y) > 0.0001:
+            s[1] = (q2.y - p1.y) / (p2.y-p1.y)
 
-        # if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
-        #     # vertical Line
-        #     s[0] = s[1]
-        # elif abs(p2.y - p1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
-        #     # horizontal Line
-        #     s[1] = s[0]
+        if abs(p2.x - p1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
+            # vertical Line
+            s[0] = s[1]
+        elif abs(p2.y - p1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
+            # horizontal Line
+            s[1] = s[0]
 
-        # debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
-        #     debugPrint("q2 in between")
-        #     return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
+        debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+            debugPrint("q2 in between")
+            return True, vertex(vertex.V_INTERSECT, q2.x, q2.y)
 
-        # # Check if p1 in 11 and 22
-        # s = [-1]*2
-        # if abs(q2.x - q1.x) > 0.0001:
-        #     s[0] = (p1.x - q1.x) / (q2.x-q1.x)
+        # Check if p1 in 11 and 22
+        s = [-1]*2
+        if abs(q2.x - q1.x) > 0.0001:
+            s[0] = (p1.x - q1.x) / (q2.x-q1.x)
 
-        # if abs(q2.y - q1.y) > 0.0001:
-        #     s[1] = (p1.y- q1.y) / (q2.y-q1.y)
+        if abs(q2.y - q1.y) > 0.0001:
+            s[1] = (p1.y- q1.y) / (q2.y-q1.y)
 
-        # if abs(q2.x - q1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
-        #     # vertical Line
-        #     s[0] = s[1]
-        # elif abs(q2.y - q1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
-        #     # horizontal Line
-        #     s[1] = s[0]
+        if abs(q2.x - q1.x) < 0.0001 and abs(q2.x - p1.x) < 0.0001:
+            # vertical Line
+            s[0] = s[1]
+        elif abs(q2.y - q1.y) < 0.0001 and abs(q2.y - p1.y) < 0.0001:
+            # horizontal Line
+            s[1] = s[0]
 
-        # debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
-        # if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
-        #     debugPrint("p1 in between")
-        #     return True, vertex(vertex.V_INTERSECT, p1.x, p1.y)
+        debugPrint("Q2 s0 {:.3f} s1 {:.3f}".format(s[0], s[1]))
+        if abs(s[0] - s[1]) < 0.0001 and s[0] > -0.0001 and s[0] < 1.0001:
+            debugPrint("p1 in between")
+            return True, vertex(vertex.V_INTERSECT, p1.x, p1.y)
 
         return False, vertex(vertex.V_INTERSECT, float('inf'), float('inf'))
 
@@ -588,7 +588,7 @@ def main():
     streetDB = streetDataBase()
 
     while True:
-        sys.stdout.write(PROMPT)
+        #sys.stdout.write(PROMPT)
         line = sys.stdin.readline()
 
         if line == '':
