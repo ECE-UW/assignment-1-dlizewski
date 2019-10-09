@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 Marking #10: StudentInfo(repo='assignment-1-dlizewski', first='Daniel', last='Lizewski', watiam='dlizewsk', studentid=20470686, email='dlizewsk@uwaterloo.ca')
+=======
+Marking #4: StudentInfo(repo='assignment-1-dlizewski', first='Daniel', last='Lizewski', watiam='dlizewsk', studentid=20470686, email='dlizewsk@uwaterloo.ca')
+>>>>>>> 2e2e538ff0f50c12aae12958a2baf2223590b61a
 Mark = 0
 
 Running test 0:	 +20
